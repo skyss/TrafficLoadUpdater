@@ -16,7 +16,7 @@ namespace TrafficLoadUpdater
     public static class UpdateTeams
     {
         [FunctionName("SendTrafficLoadUpdate")]
-        public static async void Run([TimerTrigger("0 15 8 * * *", RunOnStartup =true)]TimerInfo myTimer, ILogger log)
+        public static async void Run([TimerTrigger("0 15 8 * * *")]TimerInfo myTimer, ILogger log)
         {
             var config = new ConfigurationBuilder()
                 .SetBasePath(Environment.CurrentDirectory)
@@ -234,10 +234,6 @@ namespace TrafficLoadUpdater
                             'name': 'Røde turer',
                             'value': '**" + redCountBus.ToString() + @"**'
                         }]
-                    },
-                    {
-                        'activityTitle' : 'Risikoturar',
-                        'activityText' : '" + sb.ToString() + @"'
                     }                   
                     ]
                 }";

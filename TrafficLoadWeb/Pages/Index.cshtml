@@ -1,10 +1,48 @@
-﻿@page
+﻿@page "{lineFilter?}"
 @model IndexModel
-@{
-    ViewData["Title"] = "Home page";
-}
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+@{
+    var culture = new System.Globalization.CultureInfo("nb-NO");
+    ViewData["Title"] = "Home page";
+
+        <table class="table table-striped table-sm">
+            <thead>
+                <tr>
+                    <th scope="col" style="background: #eee; position: sticky; top: 0;">Linje</th>
+                    <th scope="col" style="background: #eee; position: sticky; top: 0;">Fra</th>
+                    <th scope="col" style="background: #eee; position: sticky; top: 0;">Avgang</th>
+                    <th scope="col" style="background: #eee; position: sticky; top: 0;">I går</th>
+                    <th scope="col" style="background: #eee; position: sticky; top: 0;">@culture.DateTimeFormat.GetDayName(DateTime.Now.AddDays(-2).DayOfWeek)</th>
+                    <th scope="col" style="background: #eee; position: sticky; top: 0;">@culture.DateTimeFormat.GetDayName(DateTime.Now.AddDays(-3).DayOfWeek)</th>
+                    <th scope="col" style="background: #eee; position: sticky; top: 0;">@culture.DateTimeFormat.GetDayName(DateTime.Now.AddDays(-4).DayOfWeek)</th>
+                    <th scope="col" style="background: #eee; position: sticky; top: 0;">@culture.DateTimeFormat.GetDayName(DateTime.Now.AddDays(-5).DayOfWeek)</th>
+                    <th scope="col" style="background: #eee; position: sticky; top: 0;">@culture.DateTimeFormat.GetDayName(DateTime.Now.AddDays(-6).DayOfWeek)</th>
+                    <th scope="col" style="background: #eee; position: sticky; top: 0;">@culture.DateTimeFormat.GetDayName(DateTime.Now.AddDays(-7).DayOfWeek)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.TurModel)
+                {
+                <tr>
+                    <td>@Html.DisplayFor(modelItem => item.LineName)</td>
+                    <td>@Html.DisplayFor(modelItem => item.AvgangsStopp)</td>
+                    <td>@Html.DisplayFor(modelItem => item.AvgangsTid)</td>
+                    <td class="@Html.Raw(item.isRed ? "bg-danger" : "") @Html.Raw(item.isYellow ? "bg-warning" : "") @Html.Raw(item.isGreen ? "bg-success" : "")" )>@Html.DisplayFor(modelItem => item.FraStopp)</td>
+                    @for (int i = -1; i > -7; i--)
+                    {
+                        var itm = item.History.Where(h => h.AvgangsTid.Date == item.AvgangsTid.Date.AddDays(i)).FirstOrDefault();
+                        if (itm != null)
+                        {
+                            <td class="@Html.Raw(itm.isRed ? "bg-danger" : "") @Html.Raw(itm.isYellow ? "bg-warning" : "") @Html.Raw(itm.isGreen ? "bg-success" : "")" )>@Html.DisplayFor(modelItem => itm.FraStopp)</td>
+                        }
+                        else
+                        {
+                            <td class="bg-secondary"></td>
+                        }
+
+                    }
+                </tr>
+                }
+            </tbody>
+        </table>
+    }
