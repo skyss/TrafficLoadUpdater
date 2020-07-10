@@ -11,6 +11,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using TrafficLoadWeb.Data;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Identity;
+using TrafficLoadWeb.Models;
 
 namespace TrafficLoadWeb
 {
@@ -19,19 +21,29 @@ namespace TrafficLoadWeb
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+
+
         }
 
         public static readonly ILoggerFactory factory
             = LoggerFactory.Create(builder => { builder.AddConsole(); });
+
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddRazorPages().AddRazorRuntimeCompilation();
+            services.AddRazorPages().AddRazorRuntimeCompilation().AddRazorPagesOptions(opts =>
+            {
+                opts.Conventions.Add(new CustomRouteModelConvention());
+            });                
 
             services.AddDbContext<TrafficLoadContext>(
                 options => options.UseSqlServer(Configuration.GetConnectionString("SQLConnectionString")).UseLoggerFactory(factory));
+
+            services.AddHttpContextAccessor();
+
+            services.AddScoped<ITurModelHelper, TurModelHelper>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

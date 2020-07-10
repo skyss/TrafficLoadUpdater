@@ -16,5 +16,6 @@ namespace TrafficLoadWeb.Data
         {
             modelBuilder.Entity<TurModel>().HasMany(c => c.History);
         }
+
     }
 }

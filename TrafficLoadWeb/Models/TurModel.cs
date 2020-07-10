@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -6,6 +8,13 @@ using TrafficLoadWeb.Models;
 
 namespace TrafficLoadWeb.Models
 {
+
+    public enum TrafficLightStatus
+    {
+        Red = 50,
+        Yellow = 75,
+        Green = 100
+    }
 
     public interface ITurModel
     {
@@ -20,9 +29,18 @@ namespace TrafficLoadWeb.Models
         public String RuteNamn { get; set; }
 
 #nullable enable
-        public String? FraStopp { get; set; }
-        public DateTime? FraTid { get; set; }
-        public DateTime? TilTid { get; set; }
+        public String? FraStoppR { get; set; }
+        public DateTime? FraTidR { get; set; }
+        public DateTime? TilTidR { get; set; }
+        public String? FraStoppY { get; set; }
+        public DateTime? FraTidY { get; set; }
+        public DateTime? TilTidY { get; set; }
+        public String? FraStoppG { get; set; }
+        public DateTime? FraTidG { get; set; }
+        public DateTime? TilTidG { get; set; }
+        public String? FraStopp { get; }
+        public DateTime? FraTid { get; }
+        public DateTime? TilTid { get; }
 
         public bool isRed { get; }
         public bool isYellow{ get; }
@@ -31,15 +49,82 @@ namespace TrafficLoadWeb.Models
 
     }
 
-    internal class TurModelHelper
+    public interface ITurModelHelper
     {
+        public TrafficLightStatus CurrentStatus { get; }
+        public String? FraStopp(ITurModel m);
+        public DateTime? FraTid(ITurModel m);
+        public DateTime? TilTid(ITurModel m);
+        public bool IsRed(ITurModel m);
+        public bool IsYellow(ITurModel m);
+        public bool IsGreen(ITurModel m);
+        public bool IsUnknown(ITurModel m);
 
-        internal static bool IsRed(ITurModel m)
+    }
+
+    public class TurModelHelper : ITurModelHelper
+    {
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        public TurModelHelper(IHttpContextAccessor acc)
+        {
+            _httpContextAccessor = acc;
+
+            String status = "Red";
+            if (acc.HttpContext.Request.RouteValues.ContainsKey("status"))
+                status = acc.HttpContext.Request.RouteValues["status"].ToString();
+
+            Factor = ((int) Enum.Parse(typeof(TrafficLightStatus), status, true)) / 100.0;
+        }
+
+        public TurModelHelper()
+        {
+            Factor = .50;
+        }
+
+        public TrafficLightStatus CurrentStatus 
+        { 
+            get {
+                return (TrafficLightStatus)Enum.ToObject(typeof(TrafficLightStatus), (int)Factor * 100);
+            } 
+        }
+
+        internal double Factor { get; set; } = .5;
+
+        public String? FraStopp(ITurModel m) {
+            if (CurrentStatus == TrafficLightStatus.Red)
+                return m.FraStoppR;
+            else if (CurrentStatus == TrafficLightStatus.Yellow)
+                return m.FraStoppY;
+            else
+                return m.FraStoppG;
+        }
+        public DateTime? FraTid(ITurModel m)
+        {
+            if (CurrentStatus == TrafficLightStatus.Red)
+                return m.FraTidR;
+            else if (CurrentStatus == TrafficLightStatus.Yellow)
+                return m.FraTidY;
+            else
+                return m.FraTidG;
+        }
+
+        public DateTime? TilTid(ITurModel m)
+        {
+            if (CurrentStatus == TrafficLightStatus.Red)
+                return m.TilTidR;
+            else if (CurrentStatus == TrafficLightStatus.Yellow)
+                return m.TilTidY;
+            else
+                return m.TilTidG;
+        }
+
+        public bool IsRed(ITurModel m)
         {
             if (!m.FraTid.HasValue || !m.TilTid.HasValue)
                 return false;
 
-            if ((double)m.Ombord > m.Kapasitet * 1.5)
+            if ((double)m.Ombord > (m.Kapasitet * (Factor * 1.25)))
                 return true;
             else if (m.TilTid.Value.Subtract(m.FraTid.Value).TotalMinutes >= 15.0)
                 return true;
@@ -47,23 +132,23 @@ namespace TrafficLoadWeb.Models
             return false;
         }
 
-        internal static bool IsYellow(ITurModel m)
+        public bool IsYellow(ITurModel m)
         {
-            if (TurModelHelper.IsRed(m))
+            if (this.IsRed(m))
                 return false;
 
-            return m.Ombord > m.Kapasitet;         
+            return (double)m.Ombord > (m.Kapasitet * Factor);         
         }
 
-        internal static bool IsGreen(ITurModel m)
+        public bool IsGreen(ITurModel m)
         {
-            if (TurModelHelper.IsYellow(m))
+            if (this.IsYellow(m))
                 return false;
 
-            return m.Ombord <= m.Kapasitet;
+            return (double)m.Ombord <= (m.Kapasitet * Factor);
         }
 
-        internal static bool IsUnknown(ITurModel m)
+        public bool IsUnknown(ITurModel m)
         {
             return m.TripStatus != 1;
         }
@@ -73,36 +158,61 @@ namespace TrafficLoadWeb.Models
     [Table("OverlastTurer")]
     public class TurModel : ITurModel
     {
+        private ITurModelHelper? _helper = new TurModelHelper();
+
+        private TurModel(Data.TrafficLoadContext ctx)
+        {
+            var s = ctx.Turer;
+        }
+
+        public ITurModelHelper Helper
+        {
+            set
+            {
+                _helper = value;
+            }
+        }
+
         [Key]
-        public String TripKey { get; set; }
+        public String TripKey { get; set; } = "";
         public int TripStatus { get; set; }
-        public String LineName { get; set; }
-        public String AvgangsStopp { get; set; }
+        public String LineName { get; set; } = "";
+        public String AvgangsStopp { get; set; } = "";
         public DateTime AvgangsTid { get; set; }
         public decimal Ombord { get; set; }
         public int Kapasitet { get; set; }
-        public String RouteFromToKey { get; set; }
-        public String RuteNamn { get; set; }
+        public String RouteFromToKey { get; set; } = "";
+        public String RuteNamn { get; set; } = "";
 
 #nullable enable
-        public String? FraStopp { get; set; }
-        public DateTime? FraTid { get; set; }
-        public DateTime? TilTid { get; set; }
+        public String? FraStoppR { get; set; }
+        public DateTime? FraTidR { get; set; }
+        public DateTime? TilTidR { get; set; }
+        public String? FraStoppY { get; set; }
+        public DateTime? FraTidY { get; set; }
+        public DateTime? TilTidY { get; set; }
+        public String? FraStoppG { get; set; }
+        public DateTime? FraTidG { get; set; }
+        public DateTime? TilTidG { get; set; }
 #nullable disable
         [NotMapped, ForeignKey("MasterTripKey")]
         public virtual ICollection<TurModelHistory> History { get; set; }
+
+        public String? FraStopp {  get { return _helper.FraStopp(this); } }
+        public DateTime? FraTid { get { return _helper.FraTid(this); } }
+        public DateTime? TilTid { get { return _helper.TilTid(this); } }
 
         public bool isRed
         {
             get
             {
-                return TurModelHelper.IsRed(this);
+                return _helper.IsRed(this);
             }
         }
 
         public bool isYellow { 
             get {
-                return TurModelHelper.IsYellow(this);
+                return _helper.IsYellow(this);
             }
         }
 
@@ -110,7 +220,7 @@ namespace TrafficLoadWeb.Models
         {
             get
             {
-                return TurModelHelper.IsGreen(this);
+                return _helper.IsGreen(this);
             }
         }
 
@@ -118,7 +228,7 @@ namespace TrafficLoadWeb.Models
         {
             get
             {
-                return TurModelHelper.IsUnknown(this);
+                return _helper.IsUnknown(this);
             }
         }
     }
@@ -126,17 +236,27 @@ namespace TrafficLoadWeb.Models
     [Table("OverlastTurerHistorie")]
     public class TurModelHistory : ITurModel
     {
+        private ITurModelHelper? _helper = new TurModelHelper();
+
+        public ITurModelHelper Helper
+        {
+            set
+            {
+                _helper = value;
+            }
+        }
+
         public String MasterTripKey { get; set; }
         public DateTime MasterTid { get; set; }
         [Column("cTripKey")]
         [Key]
-        public string TripKey { get;set;}
+        public String TripKey { get;set;}
         [Column("cTripStatus")]
         public int TripStatus { get;set;}
         [Column("cLineName")]
-        public string LineName { get;set;}
+        public String LineName { get;set;}
         [Column("cAvgangsStopp")]
-        public string AvgangsStopp { get;set;}
+        public String AvgangsStopp { get;set;}
         [Column("cAvgangsTid")]
         public DateTime AvgangsTid { get;set;}
         [Column("cOmbord")]
@@ -144,21 +264,40 @@ namespace TrafficLoadWeb.Models
         [Column("cKapasitet")]
         public int Kapasitet { get;set;}
         [Column("cRouteFromToKey")]
-        public string RouteFromToKey { get;set;}
+        public String RouteFromToKey { get;set;}
         [Column("cRuteNamn")]
-        public string RuteNamn { get;set;}
-        [Column("cFraStopp")]
-        public string FraStopp { get;set;}
-        [Column("cFraTid")]
-        public DateTime? FraTid { get;set;}
-        [Column("cTilTid")]
-        public DateTime? TilTid { get;set;}
+        public String RuteNamn { get;set;}
+        [Column("cFraStoppR")]
+        public String FraStoppR { get;set;}
+        [Column("cFraTidR")]
+        public DateTime? FraTidR { get;set;}
+        [Column("cTilTidR")]
+        public DateTime? TilTidR { get;set;}
+
+        [Column("cFraStoppY")]
+        public String FraStoppY { get; set; }
+        [Column("cFraTidY")]
+        public DateTime? FraTidY { get; set; }
+        [Column("cTilTidY")]
+        public DateTime? TilTidY { get; set; }
+
+        [Column("cFraStoppG")]
+        public String FraStoppG { get; set; }
+        [Column("cFraTidG")]
+        public DateTime? FraTidG { get; set; }
+        [Column("cTilTidG")]
+        public DateTime? TilTidG { get; set; }
+
+        public String? FraStopp { get { return _helper.FraStopp(this); } }
+        public DateTime? FraTid { get { return _helper.FraTid(this); } }
+        public DateTime? TilTid { get { return _helper.TilTid(this); } }
+
 
         public bool isRed
         {
             get
             {
-                return TurModelHelper.IsRed(this);
+                return _helper.IsRed(this);
             }
         }
 
@@ -166,7 +305,7 @@ namespace TrafficLoadWeb.Models
         {
             get
             {
-                return TurModelHelper.IsYellow(this);
+                return _helper.IsYellow(this);
             }
         }
 
@@ -174,7 +313,7 @@ namespace TrafficLoadWeb.Models
         {
             get
             {
-                return TurModelHelper.IsGreen(this);
+                return _helper.IsGreen(this);
             }
         }
 
@@ -182,7 +321,7 @@ namespace TrafficLoadWeb.Models
         {
             get
             {
-                return TurModelHelper.IsUnknown(this);
+                return _helper.IsUnknown(this);
             }
         }
     }
