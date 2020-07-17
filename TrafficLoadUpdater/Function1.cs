@@ -94,7 +94,7 @@ namespace TrafficLoadUpdater
 	                        from
 		                        (STOPPOINT_DATA d inner join ROUTE_FROM_TO rute on d.RouteFromToKey = rute.RouteFromToKey) 
 	                        where
-	                            Operating_dateKey in ('" + DateTime.Now.AddDays(-1).ToString("yyyyMMdd") + @"')
+    	                            Operating_dateKey in ('" + DateTime.Now.AddDays(-1).ToString("yyyyMMdd") + @"')
 	                        and TripStatus = 1
                         )
                         select count(distinct tripkey) from turer";
@@ -116,123 +116,144 @@ namespace TrafficLoadUpdater
             sql = @"with 
                 turer as (
 	                select
-		                d.lid, tripkey, stopkey, Entered_In, Entered_out, d.routefromtokey, stopkey_to,
+		                d.lid, tripkey, stopkey, Entered_In, Entered_out, d.routefromtokey, stopkey_to, tripstatus,
 		                sum(entered_in-entered_out) over (partition by tripkey ORDER BY d.lid ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as onboard,
+		                (case when sum(entered_in-entered_out) over (partition by tripkey ORDER BY d.lid ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) > isnull(kapasitet * 0.5, 20) and TripStatus = 1 then 1 else 0 end) as overlastR,
+		                (case when sum(entered_in-entered_out) over (partition by tripkey ORDER BY d.lid ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) > isnull(kapasitet * 0.75, 30) and TripStatus = 1 then 1 else 0 end) as overlastY,
+		                (case when sum(entered_in-entered_out) over (partition by tripkey ORDER BY d.lid ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) > isnull(kapasitet, 40) and TripStatus = 1 then 1 else 0 end) as overlastG,
 		                lead(d.lid) over (partition by tripkey ORDER BY d.lid) as nesteStoppLid,
 		                first_value(stopkey) over (partition by tripkey ORDER BY d.lid) as forsteStoppId,
+		                rute.from_To as ruteNamn,
+		                --string_agg(d.StopKey, ',') over (partition by tripkey ORDER BY d.lid ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as rute,
 		                first_value(parse(concat(substring(Actual_Datekey, 1, 4), '.', substring(Actual_Datekey, 5, 2), '.', substring(Actual_Datekey, 7, 2), ' ', substring(TimeKey, 1, 2), ':', substring(TimeKey, 3, 2)) as datetime)) over (partition by tripkey ORDER BY d.lid) as forsteStoppTid,
 		                parse(concat(substring(Actual_Datekey, 1, 4), '.', substring(Actual_Datekey, 5, 2), '.', substring(Actual_Datekey, 7, 2), ' ', substring(TimeKey, 1, 2), ':', substring(TimeKey, 3, 2)) as datetime) as tid,
 		                rute.LineNameLong,
-		                kapasitet.kapasitet
+		                kapasitet.kapasitet		
 	                from
 		                (STOPPOINT_DATA d inner join ROUTE_FROM_TO rute on d.RouteFromToKey = rute.RouteFromToKey) left join LinjeKapasitet kapasitet on rute.LineNameLong = kapasitet.LineNameLong
 	                where
 	                    Operating_dateKey in ('" + DateTime.Now.AddDays(-1).ToString("yyyyMMdd") + @"')
-	                and TripStatus = 1
-                ),
-                overlast as (
-	                select
-		                *
-	                from 
-		                turer
-	                where
-		                onboard > isnull(kapasitet, 20)
-
-                union all
-
-	                select 
-		                neste.*
-	                from 
-		                turer as denne inner join turer as neste on denne.nesteStoppLid = neste.lid
-	                where
-		                denne.onboard > isnull(denne.kapasitet, 20)
-
                 )
 
+                insert into overlastturer
                 select
-	                max(LineNameLong) as LineName, max(p.Name) as avgangsstopp, max(forsteStoppTid) as avgangsTid, max(onboard) as ombord, isnull(max(kapasitet), 20) as kapasitet, 
-	                cast(max(tid) - min(tid) as time(3)) as overlastTid
+	                distinct 
+	                tripkey,
+	                max(tripstatus) over (partition by TripKey) as tripStatus,
+	                LineNameLong as LineName,
+	                p.Name as avgangsstopp,
+	                forsteStoppTid as avgangstid,
+	                max(onboard) over (partition by TripKey) as ombord,
+	                isnull(kapasitet, 40) as kapasitet,
+	                first_value(p2.Name) over (partition by tripkey ORDER BY overlastR desc, tid ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) as fraStoppR,
+	                first_value(p2.Name) over (partition by tripkey ORDER BY overlastY desc, tid ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) as fraStoppY,
+	                first_value(p2.Name) over (partition by tripkey ORDER BY overlastG desc, tid ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) as fraStoppG,
+	                min(case when overlastR = 1 then tid end) over (partition by TripKey order by tid RANGE BETWEEN unbounded preceding and UNBOUNDED FOLLOWING) as fraTidR,
+	                max(case when overlastR = 1 then tid end) over (partition by TripKey ORDER BY tid RANGE BETWEEN unbounded preceding AND UNBOUNDED FOLLOWING) as tilTidR,
+	                min(case when overlastY = 1 then tid end) over (partition by TripKey order by tid RANGE BETWEEN unbounded preceding and UNBOUNDED FOLLOWING) as fraTidY,
+	                max(case when overlastY = 1 then tid end) over (partition by TripKey ORDER BY tid RANGE BETWEEN unbounded preceding AND UNBOUNDED FOLLOWING) as tilTidY,
+	                min(case when overlastG = 1 then tid end) over (partition by TripKey order by tid RANGE BETWEEN unbounded preceding and UNBOUNDED FOLLOWING) as fraTidG,
+	                max(case when overlastG = 1 then tid end) over (partition by TripKey ORDER BY tid RANGE BETWEEN unbounded preceding AND UNBOUNDED FOLLOWING) as tilTidG,
+	                max(rutenamn) over (partition by TripKey) as rutenamn,
+	                max(RouteFromToKey) over (partition by TripKey) as RouteFromToKey
+	
                 from
-	                overlast inner join STOPPOINTS p on overlast.forsteStoppId = p.StopKey
-                group by
-	                tripkey
-                order by 
-	                avgangsTid";
+	                turer inner join STOPPOINTS p on turer.forsteStoppId = p.StopKey inner join STOPPOINTS p2 on turer.StopKey = p2.StopKey";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+
+                using SqlCommand sniffer = new SqlCommand("select count(tripkey) from OverlastTurer where convert(date, avgangstid) = '" + DateTime.Now.AddDays(-1).ToString("yyyyMMdd") + "'", conn);
+                var snifferResult = (int)sniffer.ExecuteScalar();
+
+                if (snifferResult < 500) { 
+                    using SqlCommand cmd = new SqlCommand(sql, conn);
+                    cmd.CommandTimeout = 300;
+                    cmd.ExecuteNonQuery();
+                }
+
+                conn.Close();
+            }
+
+            sql = @"select
+	                    case when LineName = '1' then 'Bybanen' else 'Buss' end as Line,
+	                    sum(case 
+		                    when tripstatus = 1 and (ombord >= floor(kapasitet * 0.75) * 1.25 or datediff(minute, fratidY, tilTidY) >= 15) then 1 
+		                    else 0
+		                    end) as raude,
+	                    sum(case 
+		                    when tripstatus = 1 and (ombord between floor(kapasitet * 0.75) and floor((kapasitet * 0.75) * 1.25) and datediff(minute, fratidY, tilTidY) < 15) then 1 
+		                    else 0
+		                    end) as gule,
+	                    sum(case 
+		                    when tripstatus = 1 and ombord <= kapasitet * 0.75 then 1
+		                    else 0
+		                    end) as grone,
+	                    sum(case when tripstatus != 1 then 1 else 0 end) as ukjente
+                    from 
+	                    OverlastTurer 
+                    where 
+	                    convert(date, avgangstid) = '" + DateTime.Now.AddDays(-1).ToString("yyyyMMdd") + @"'
+                    group by
+	                    case when LineName = '1' then 'Bybanen' else 'Buss' end";
 
             int redCountBus = 0;
             int yellowCountBus = 0;
             int redCountRail = 0;
             int yellowCountRail = 0;
 
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
-
-            sb.Append("<table width=100%><tr><th>Linje</th><th>Avgang frå</th><th>Avgangstid</th><th>Passasjerer</th><th>Minutt overlast</th></tr>");
-
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-
-                bool altRow = false;
-
                 conn.Open();
 
                 using SqlCommand cmd = new SqlCommand(sql, conn);
                 cmd.CommandTimeout = 300;
+
                 using var rows = await cmd.ExecuteReaderAsync();
                 while (await rows.ReadAsync())
                 {
-                    bool isRed = false;
-
-                    if (double.Parse(rows["ombord"].ToString()) > Math.Floor(double.Parse(rows["kapasitet"].ToString()) * 1.5))
-                        isRed = true;
-                    else if (TimeSpan.Parse(rows["overlastTid"].ToString()).Minutes >= 15)
-                        isRed = true;
-
-                    redCountRail += isRed && rows["LineName"].ToString().Equals("1") ? 1 : 0;
-                    redCountBus += isRed && !rows["LineName"].ToString().Equals("1") ? 1 : 0;
-                    yellowCountRail += !isRed && rows["LineName"].ToString().Equals("1") ? 1 : 0;
-                    yellowCountBus += !isRed && !rows["LineName"].ToString().Equals("1") ? 1 : 0;
-
-                    String style = "";
-                    if (isRed)
-                        style = "color:red;";
-
-                    if (altRow)
-                        style += "background-color:lightgray";
-                    altRow = !altRow;
-
-                    sb.AppendFormat("<tr style={0}><td>{1}</td><td>{2}</td><td>{3:t}</td><td>{4:#} (+{5:#})</td><td>{6:%m}</td></tr>", style, rows["LineName"], rows["avgangsstopp"], (DateTime)rows["avgangsTid"], (decimal)rows["ombord"], (decimal)rows["ombord"] - (int)rows["kapasitet"], (TimeSpan) rows["overlastTid"]);
+                    if (rows["Line"].ToString().Equals("Buss"))
+                    {
+                        redCountBus = Convert.ToInt32(rows["raude"].ToString());
+                        yellowCountBus = Convert.ToInt32(rows["gule"].ToString());
+                    } else
+                    {
+                        redCountRail = Convert.ToInt32(rows["raude"].ToString());
+                        yellowCountRail = Convert.ToInt32(rows["gule"].ToString());
+                    }
                 }
                 rows.Close();
                 conn.Close();
             }
 
-            sb.Append("</table>");
+            String url = "https://trafficload.azurewebsites.net/Yellow/Yellow/" + DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd");
 
             String json = @"
                 {
                     '@type': 'MessageCard',
                     '@context': 'http://schema.org/extensions',
                     'themeColor': '0076D7',
-                    'text': 'Passasjertall " + lightRail[0].Key.ToShortDateString() + @" (" + apcTripCount.ToString() + @" turar med APC)',
+                    'text': 'Passasjertall " + lightRail[0].Key.ToShortDateString() + @" (" + apcTripCount.ToString() + @" turar med APC) - <a href=""" + url + @""">Til nettsida</a>',
                     'sections': [
                     {
                         'activityTitle': 'Bybanen - Tal passasjerer: **" + lightRail[0].Value.ToString() + "** " + lightRailChange + @"',
                         'facts': [{                        
                             'name': 'Gule turer',
-                            'value': '**" + yellowCountRail.ToString() + @"**'
+                            'value': '<b><a href=""" + url + @""">" + yellowCountRail.ToString() + @"</a></b>'
                         }, {
                             'name': 'Røde turer',
-                            'value': '**" + redCountRail.ToString() + @"**'
+                            'value': '<b><a href=""" + url + @""">" + redCountRail.ToString() + @"</a></b>'
                         }]
                     },
                     {
                         'activityTitle': 'Buss - Tal passasjerer: **" + bus[0].Value.ToString() + "** " + busChange + @"',
                         'facts': [{                        
                             'name': 'Gule turer',
-                            'value': '**" + yellowCountBus.ToString() + @"**'
+                            'value': '<b><a href=""" + url + @""">" + yellowCountBus.ToString() + @"</a></b>'
                         }, {
                             'name': 'Røde turer',
-                            'value': '**" + redCountBus.ToString() + @"**'
+                            'value': '<b><a href=""" + url + @""">" + redCountBus.ToString() + @"</a></b>'
                         }]
                     }                   
                     ]
@@ -240,11 +261,11 @@ namespace TrafficLoadUpdater
 
             var response = string.Empty;
 
-            String url = config["TeamsPostUrl"];
+            String teamsUrl = config["TeamsPostUrl"];
 
             using (var client = new HttpClient())
             {
-                HttpResponseMessage result = await client.PostAsync(url, new StringContent(json));
+                HttpResponseMessage result = await client.PostAsync(teamsUrl, new StringContent(json));
                 var responseContent = await result.Content.ReadAsStringAsync();
 
                 log.LogInformation($"Response: {responseContent}");

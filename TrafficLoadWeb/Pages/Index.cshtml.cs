@@ -19,26 +19,26 @@ namespace TrafficLoadWeb.Pages
  
     public class IndexModel : PageModel
     {
-
-        private readonly TrafficLoadContext _context;
-        private readonly ITurModelHelper _helper;
-
-        public IndexModel(TrafficLoadContext context, ITurModelHelper helper)
-        {
-            _context = context;
-            _helper = helper;
-        }
+        [BindProperty(SupportsGet = true)]
+        public TrafficLightStatus Status { get; set; } = TrafficLightStatus.Yellow;
 
         [BindProperty(SupportsGet = true)]
-        public String LineFilter { get; set; }
-
-        [BindProperty(SupportsGet = true)]
-        public String WarningLevel { get; set; }
+        public TrafficLightStatus FilterStatus { get; set; } = TrafficLightStatus.Green;
 
         [BindProperty(SupportsGet = true)]
         public DateTime Date { get; set; } = DateTime.Now.AddDays(-1);
 
+        [BindProperty(SupportsGet = true)]
+        public String Line { get; set; }
+
         public IList<TurModel> TurModel { get; set; }
+
+        private readonly TrafficLoadContext _context;
+
+        public IndexModel(TrafficLoadContext context)
+        {
+            _context = context;
+        }
 
         public async Task OnGetAsync()
         {
@@ -46,14 +46,30 @@ namespace TrafficLoadWeb.Pages
                 .Include(h => h.History)
                 .Where(t => t.AvgangsTid.Date == Date.Date);
 
-            if (!String.IsNullOrEmpty(LineFilter))
-                query = query.Where(t => t.LineName.Equals(LineFilter));
+            if (!String.IsNullOrEmpty(Line))
+                query = query.Where(t => t.LineName.Equals(Line));
 
-            TurModel = await query.ToListAsync<TurModel>();
+            if (FilterStatus == TrafficLightStatus.Yellow)
+            {
+                decimal factor = Convert.ToDecimal((int)Status / 100.0);
+                query = query.Where(t => t.TripStatus == 1);
+                query = query.Where(t => t.Ombord > ((decimal)t.Kapasitet * factor));
+            }
 
-            foreach(var m in TurModel)
-                m.Helper = _helper; 
+            if (FilterStatus == TrafficLightStatus.Red)
+            {
+                decimal factor = Convert.ToDecimal((int)Status / 100.0);
 
+                query = query.Where(t => t.TripStatus == 1);
+                if (Status == TrafficLightStatus.Green)
+                    query = query.Where(t => t.Ombord > (((decimal)t.Kapasitet * factor) * Convert.ToDecimal(1.5)) || (t.TilTidG - t.FraTidG).Value.Minutes >= 15);
+                else if (Status == TrafficLightStatus.Yellow)
+                    query = query.Where(t => t.Ombord > (((decimal)t.Kapasitet * factor) * Convert.ToDecimal(1.5)) || (t.TilTidY - t.FraTidY).Value.Minutes >= 15);
+                else 
+                    query = query.Where(t => t.Ombord > (((decimal)t.Kapasitet * factor) * Convert.ToDecimal(1.5)) || (t.TilTidR - t.FraTidR).Value.Minutes >= 15);
+            }
+
+            TurModel = await query.OrderBy(t => t.AvgangsTid).ToListAsync<TurModel>();
         }
 
     }

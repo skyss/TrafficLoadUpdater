@@ -33,17 +33,15 @@ namespace TrafficLoadWeb
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddRazorPages().AddRazorRuntimeCompilation().AddRazorPagesOptions(opts =>
-            {
-                opts.Conventions.Add(new CustomRouteModelConvention());
-            });                
+            services.AddRazorPages().AddRazorRuntimeCompilation();
 
             services.AddDbContext<TrafficLoadContext>(
                 options => options.UseSqlServer(Configuration.GetConnectionString("SQLConnectionString")).UseLoggerFactory(factory));
 
-            services.AddHttpContextAccessor();
-
-            services.AddScoped<ITurModelHelper, TurModelHelper>();
+            services.AddRouting(options =>
+            {
+                options.ConstraintMap.Add("TrafficLight", typeof(TrafficLightStatusConstraint));
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -60,17 +58,26 @@ namespace TrafficLoadWeb
                 app.UseHsts();
             }
 
+            var supportedCultures = new[] { "nn-NO", "nb-NO", "en" };
+            var localizationOptions = new RequestLocalizationOptions().SetDefaultCulture(supportedCultures[0])
+                .AddSupportedCultures(supportedCultures)
+                .AddSupportedUICultures(supportedCultures);
+
+            app.UseRequestLocalization(localizationOptions);
+
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();
 
-            app.UseAuthorization();
+            //app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapRazorPages();
             });
+
+
         }
     }
 }
