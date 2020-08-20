@@ -1,10 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using TrafficLoadWeb.Models;
 
 namespace TrafficLoadWeb.Models
 {
@@ -15,7 +12,6 @@ namespace TrafficLoadWeb.Models
         Yellow = 75,
         Green = 100
     }
-
     public abstract class Tur
     {
         public String? FraStopp(TrafficLightStatus CurrentStatus = TrafficLightStatus.Red)
@@ -99,7 +95,13 @@ namespace TrafficLoadWeb.Models
         public int TripStatus { get; set; }
         public String LineName { get; set; } = "";
         public String AvgangsStopp { get; set; } = "";
+        public String TilStopp { 
+            get {
+                return RuteNamn.Remove(0, AvgangsStopp.Length + 2);
+            } 
+        }
         public DateTime AvgangsTid { get; set; }
+        public decimal Paastigende { get; set; }
         public decimal Ombord { get; set; }
         public int Kapasitet { get; set; }
         public String RouteFromToKey { get; set; } = "";

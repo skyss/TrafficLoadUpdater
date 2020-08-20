@@ -1,0 +1,26 @@
+﻿@page
+@model TrafficLoadWeb.Pages.StatsModel
+@{
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col">
+            <div class="jumbotron">
+                <h1>
+                    Bootstrap 4 with Material Design Bootstrap (MDB) and Twitter Typeahead
+                </h1>
+                <div class="md-form mt-4" id="the-basics">
+                    <form method="post" id="stopSelect">
+                    <select class="form-control basicAutoComplete" name="stopName"
+                            placeholder="type to search..."
+                            data-default-value="@Model.StopName"
+                            data-default-text="@Model.StopName_text"
+                            data-url="@Url.Page("stats", "search")" autocomplete="off"></select>
+                    </form>
+                </div>
+                <code><pre id="eventsCodeContainer"></pre></code>
+            </div>
+        </div>
+    </div>
+</div>

@@ -7,16 +7,14 @@ using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using Microsoft.AspNetCore.Mvc;
 
 namespace TrafficLoadUpdater
 {
     public static class UpdateTeams
     {
         [FunctionName("SendTrafficLoadUpdate")]
-        public static async void Run([TimerTrigger("0 15 8 * * *")]TimerInfo myTimer, ILogger log)
+        public static async void Run([TimerTrigger("0 15 8 * * *", RunOnStartup = true)]TimerInfo myTimer, ILogger log)
         {
             var config = new ConfigurationBuilder()
                 .SetBasePath(Environment.CurrentDirectory)
@@ -143,6 +141,7 @@ namespace TrafficLoadUpdater
 	                LineNameLong as LineName,
 	                p.Name as avgangsstopp,
 	                forsteStoppTid as avgangstid,
+                	round(sum(entered_in) over (partition by TripKey), 0) as paastigende,
 	                max(onboard) over (partition by TripKey) as ombord,
 	                isnull(kapasitet, 40) as kapasitet,
 	                first_value(p2.Name) over (partition by tripkey ORDER BY overlastR desc, tid ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) as fraStoppR,

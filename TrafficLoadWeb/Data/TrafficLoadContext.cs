@@ -11,6 +11,7 @@ namespace TrafficLoadWeb.Data
         }
 
         public DbSet<TurModel> Turer { get; set; }
+        public DbSet<StopPoint> Stopp { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

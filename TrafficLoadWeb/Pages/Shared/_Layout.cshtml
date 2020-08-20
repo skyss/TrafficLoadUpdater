@@ -8,9 +8,129 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - TrafficLoadWeb</title>
+    <title>@ViewData["Title"]</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" />
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <style>
+        #time-range p {
+            font-family: "Arial", sans-serif;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .ui-slider-horizontal {
+            height: 8px;
+            background: #D7D7D7;
+            border: 1px solid #BABABA;
+            box-shadow: 0 1px 0 #FFF, 0 1px 0 #CFCFCF inset;
+            clear: both;
+            margin: 8px 0;
+            -webkit-border-radius: 6px;
+            -moz-border-radius: 6px;
+            -ms-border-radius: 6px;
+            -o-border-radius: 6px;
+            border-radius: 6px;
+        }
+
+        .ui-slider {
+            position: relative;
+            text-align: left;
+        }
+
+        .ui-slider-horizontal .ui-slider-range {
+            top: -1px;
+            height: 100%;
+        }
+
+        .ui-slider .ui-slider-range {
+            position: absolute;
+            z-index: 1;
+            height: 8px;
+            font-size: .7em;
+            display: block;
+            border: 1px solid #5BA8E1;
+            box-shadow: 0 1px 0 #AAD6F6 inset;
+            -moz-border-radius: 6px;
+            -webkit-border-radius: 6px;
+            -khtml-border-radius: 6px;
+            border-radius: 6px;
+            background: #81B8F3;
+            background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgi…pZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JhZCkiIC8+PC9zdmc+IA==');
+            background-size: 100%;
+            background-image: -webkit-gradient(linear, 50% 0, 50% 100%, color-stop(0%, #A0D4F5), color-stop(100%, #81B8F3));
+            background-image: -webkit-linear-gradient(top, #A0D4F5, #81B8F3);
+            background-image: -moz-linear-gradient(top, #A0D4F5, #81B8F3);
+            background-image: -o-linear-gradient(top, #A0D4F5, #81B8F3);
+            background-image: linear-gradient(top, #A0D4F5, #81B8F3);
+        }
+
+        .ui-slider .ui-slider-handle {
+            border-radius: 50%;
+            background: #F9FBFA;
+            background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgi…pZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JhZCkiIC8+PC9zdmc+IA==');
+            background-size: 100%;
+            background-image: -webkit-gradient(linear, 50% 0, 50% 100%, color-stop(0%, #C7CED6), color-stop(100%, #F9FBFA));
+            background-image: -webkit-linear-gradient(top, #C7CED6, #F9FBFA);
+            background-image: -moz-linear-gradient(top, #C7CED6, #F9FBFA);
+            background-image: -o-linear-gradient(top, #C7CED6, #F9FBFA);
+            background-image: linear-gradient(top, #C7CED6, #F9FBFA);
+            width: 22px;
+            height: 22px;
+            -webkit-box-shadow: 0 2px 3px -1px rgba(0, 0, 0, 0.6), 0 -1px 0 1px rgba(0, 0, 0, 0.15) inset, 0 1px 0 1px rgba(255, 255, 255, 0.9) inset;
+            -moz-box-shadow: 0 2px 3px -1px rgba(0, 0, 0, 0.6), 0 -1px 0 1px rgba(0, 0, 0, 0.15) inset, 0 1px 0 1px rgba(255, 255, 255, 0.9) inset;
+            box-shadow: 0 2px 3px -1px rgba(0, 0, 0, 0.6), 0 -1px 0 1px rgba(0, 0, 0, 0.15) inset, 0 1px 0 1px rgba(255, 255, 255, 0.9) inset;
+            -webkit-transition: box-shadow .3s;
+            -moz-transition: box-shadow .3s;
+            -o-transition: box-shadow .3s;
+            transition: box-shadow .3s;
+        }
+
+        .ui-slider .ui-slider-handle {
+            position: absolute;
+            z-index: 2;
+            width: 22px;
+            height: 22px;
+            cursor: default;
+            border: none;
+            cursor: pointer;
+        }
+
+            .ui-slider .ui-slider-handle:after {
+                content: "";
+                position: absolute;
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                top: 50%;
+                margin-top: -4px;
+                left: 50%;
+                margin-left: -4px;
+                background: #30A2D2;
+                -webkit-box-shadow: 0 1px 1px 1px rgba(22, 73, 163, 0.7) inset, 0 1px 0 0 #FFF;
+                -moz-box-shadow: 0 1px 1px 1px rgba(22, 73, 163, 0.7) inset, 0 1px 0 0 white;
+                box-shadow: 0 1px 1px 1px rgba(22, 73, 163, 0.7) inset, 0 1px 0 0 #FFF;
+            }
+
+        .ui-slider-horizontal .ui-slider-handle {
+            top: -.5em;
+            margin-left: -.6em;
+        }
+
+        .ui-slider a:focus {
+            outline: none;
+        }
+
+        #slider-range {
+            width: 90%;
+            margin: 0 auto;
+        }
+
+        #time-range {
+            width: 200px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -21,20 +141,64 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2020 - TrafficLoadWeb - <a asp-area="" asp-page="/Privacy">Privacy</a>
+            &copy; 2020 - Skyss/Kringom
         </div>
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-ui/jquery-ui.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="//cdn.jsdelivr.net/gh/xcash/bootstrap-autocomplete@v2.3.5/dist/latest/bootstrap-autocomplete.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     @RenderSection("Scripts", required: false)
 
     <script>
+
+        $('.basicAutoComplete').autoComplete();
+
+        $('.basicAutoComplete').on('autocomplete.select', function (evt, item) {
+            $('#stopSelect').submit();
+        });
+
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
         })
+
+        $('#activeDate').change(function () {
+            $('#filters').submit();
+        });
+
+        $("#slider-range").slider({
+            range: true,
+            min: 0,
+            max: 1440,
+            step: 15,
+            values: $("#slider-range").data("values"),
+            slide: function(e, ui) {
+                var hours1 = Math.floor(ui.values[0] / 60);
+                var minutes1 = ui.values[0] - (hours1 * 60);
+
+                if (hours1 < 10) hours1 = '0' + hours1;
+                if (minutes1 < 10) minutes1 = '0' + minutes1;
+                if (minutes1 == 0) minutes1 = '00';
+
+                $('.slider-time').html(hours1 + ':' + minutes1);
+
+                var hours2 = Math.floor(ui.values[1] / 60);
+                var minutes2 = ui.values[1] - (hours2 * 60);
+
+                if (hours2 < 10) hours2 = '0' + hours2;
+                if (minutes2 < 10) minutes2 = '0' + minutes2;
+                if (minutes2 == 0) minutes2 = '00';
+
+                $('.slider-time2').html(hours2 + ':' + minutes2);
+            },
+            stop: function (event, ui) {
+                $('#timespan').val('[' + ui.values[0] + ',' + ui.values[1] + ']');
+                $('#stopSelect').submit();
+            }
+        });
     </script>
 </body>
 </html>

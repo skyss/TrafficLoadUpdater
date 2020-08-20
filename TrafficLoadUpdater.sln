@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30002.166
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrafficLoadUpdater", "TrafficLoadUpdater\TrafficLoadUpdater.csproj", "{916C2B0E-32EC-49DC-AE59-8D2C11699AE4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrafficLoadWeb", "TrafficLoadWeb\TrafficLoadWeb.csproj", "{CD1AD6F8-1421-438B-B69A-97391DD0F219}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrafficLoadWeb", "TrafficLoadWeb\TrafficLoadWeb.csproj", "{CD1AD6F8-1421-438B-B69A-97391DD0F219}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
