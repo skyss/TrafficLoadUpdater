@@ -1,0 +1,32 @@
+﻿@page
+@model HjelpModel
+
+<h1>Hjelp</h1>
+<p>Løysinga gjer deg oversikt over kapasiteten på bussar og Bybanen i området Hordaland. Datagrunnlaget viser tall frå i går og ein veke tilbake i tid. På den måten kan du sjekke når det er sannsynleg at det er mykje folk om bord, og tilpasse reisa di til når det er ledig kapasitet.</p>
+
+<p>
+    Du har desse valga:
+    <ul>
+        <li>Vel tidsperiode du vil reise (på mobil må du trykke på området du vil flytte markøren til)</li>
+        <li>Vel mellom alle avgangar eller vis berre dei som har avvik.</li>
+        <li>Vel linjenummer eller haldeplass.</li>
+        <li>Vel smittevernnivå for kollektivtrafikken. Per 21. august er det gult.</li>
+    </ul>
+</p>
+<p>Fargetyding i tabellen:</p>
+<dl>
+    <dd>
+        <span class="badge badge-pill badge-success">Grøn</span>
+        Ikkje over gjeldande kapasitet</dd>
+    <dd>
+        <span class="badge badge-pill badge-warning">Gul</span>: Fleire om bord enn gjeldande kapasitet</dd>
+    <dd>
+        <span class="badge badge-pill badge-danger">Rød</span> 25% over gjeldande kapasitet, eller gult i lengre enn 15 minutt</dd>
+    <dd><span class="badge badge-pill badge-light">Kvit</span> Data ikkje tilgjengeleg</dd>
+</dl>
+<p>
+Tala i boksane indikerer kor mange fleire passasjerar enn anbefalt det er om bord.
+Antall minutt viser kor lenge det har vore for mange passasjerar om bord</p>
+<p>
+Har du tilbakemelding om løysninga, ver venleg å bruk <a href="https://www.skyss.no/kontakt-oss/kontaktskjema/">kontaktskjemaet her.</a>
+</p>

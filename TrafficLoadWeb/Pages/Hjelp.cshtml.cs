@@ -8,17 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace TrafficLoadWeb.Pages
 {
-    public class PrivacyModel : PageModel
+    public class HjelpModel : PageModel
     {
-        private readonly ILogger<PrivacyModel> _logger;
-
-        public PrivacyModel(ILogger<PrivacyModel> logger)
-        {
-            _logger = logger;
-        }
-
-        public void OnGet()
-        {
-        }
     }
 }

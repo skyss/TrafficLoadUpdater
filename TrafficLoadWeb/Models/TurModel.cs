@@ -97,7 +97,7 @@ namespace TrafficLoadWeb.Models
         public String AvgangsStopp { get; set; } = "";
         public String TilStopp { 
             get {
-                return RuteNamn.Remove(0, AvgangsStopp.Length + 2);
+                return RuteNamn.Remove(0, RuteNamn.IndexOf("-") + 1);
             } 
         }
         public DateTime AvgangsTid { get; set; }

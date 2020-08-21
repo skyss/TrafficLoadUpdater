@@ -1,4 +1,4 @@
-﻿@page "{status:TrafficLight=Yellow}/{filterstatus:TrafficLight=Yellow}/{date:DateTime?}/{line?}"
+﻿@page "/{filterstatus:TrafficLight=Green}/{date:DateTime?}"
 @model IndexModel
 
 @{
@@ -18,11 +18,16 @@
         ).ToList<DateTime>();
 
     var parms = new Dictionary<string, string>
-    {
+{
                 { "Status", Model.Status.ToString() },
                 { "FilterStatus", Model.FilterStatus.ToString() },
-                { "Line", Model.Line  },
-                { "Date", Model.Date.ToString("yyyy-MM-dd") }
+                { "Line", Model.Line },
+                { "Date", Model.Date.ToString("yyyy-MM-dd") },
+                { "DisplayPage", Model.DisplayPage.ToString() },
+                { "Size", Model.Size.ToString() },
+                { "StopName", Model.StopName },
+                { "StopName_text", Model.StopName_text },
+                { "TimeSpan", Model.TimeSpan }
             };
 
     var status = Model.Status.ToString().ToLower();
@@ -32,7 +37,7 @@
             Tuple.Create("text-danger", (status.Equals("red")?"Gjeldande " : "Endre til ") + ": Raud", new Dictionary<string, string>(parms)),
             Tuple.Create("text-warning", (status.Equals("yellow")?"Gjeldande " : "Endre til ") + ": Gul", new Dictionary<string, string>(parms)),
             Tuple.Create("text-success", (status.Equals("green")?"Gjeldande " : "Endre til ") + ": Grøn", new Dictionary<string, string>(parms))
-                };
+                        };
 
     statuses[0].Item3["Status"] = "Red";
     statuses[1].Item3["Status"] = "Yellow";
@@ -63,16 +68,19 @@
             </ul>
             <ul class="nav nav-tabs mr-auto flex-grow-1">
                 <li class="nav-item">
-                    <a class="nav-link @(Model.FilterStatus.ToString() == "Green"?"active":"")" asp-route-filterstatus="Green" asp-page="Index">Alle avgangar</a>
+                    <a class="nav-link @(!Model.ShowHelp && Model.FilterStatus.ToString() == "Green"?"active":"")" asp-all-route-data="@(parms.Where(p => !p.Key.ToLower().Equals("filterstatus")).ToDictionary(p => p.Key, p=> p.Value))" asp-route-filterstatus="Green" asp-page="Index">Alle avgangar</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @(Model.FilterStatus.ToString() == "Yellow"?"active":"")" asp-route-filterstatus="Yellow" asp-page="Index">Avgangar med avvik</a>
+                    <a class="nav-link @(!Model.ShowHelp && Model.FilterStatus.ToString() == "Yellow"?"active":"")" asp-all-route-data="@(parms.Where(p => !p.Key.ToLower().Equals("filterstatus")).ToDictionary(p => p.Key, p=> p.Value))" asp-route-filterstatus="Yellow" asp-page="Index">Avgangar med avvik</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(Model.ShowHelp?"active":"")" asp-all-route-data="@parms" asp-page="Index" asp-route-showHelp="true">Hjelp</a>
                 </li>
                 @*<li class="nav-item">
-                    <form method="get" class="form-inline" id="filters">
-                        <input type="date" class="form-inline" asp-for="Date" id="activeDate" style="margin-left: 10px; margin-top: 5px;" />
-                    </form>
-                </li>*@
+                        <form method="get" class="form-inline" id="filters">
+                            <input type="date" class="form-inline" asp-for="Date" id="activeDate" style="margin-left: 10px; margin-top: 5px;" />
+                        </form>
+                    </li>*@
             </ul>
         </div>
     </nav>
@@ -91,93 +99,192 @@
                     </div>
                 </div>
                 <div class="input-group mb-2 mr-sm-2">
+                    <label for="stopName" class="col-form-label">Linje:</label>
+                    <input type="text" class="form-control basicAutoComplete" name="line"
+                           placeholder="Skriv for å søke..."
+                           value="@Model.Line"
+                           data-url="@Url.Content("~/js/lines.json")" autocomplete="off">
+                </div>
+                <div class="input-group mb-2 mr-sm-2">
                     <label for="stopName" class="col-form-label">Haldeplass:</label>
                     <select class="form-control basicAutoComplete" name="stopName"
-                            placeholder="type to search..."
+                            placeholder="Skriv for å søke..."
                             data-default-value="@Model.StopName"
                             data-default-text="@Model.StopName_text"
-                            data-url="@Url.Page("index", "search")" autocomplete="off"></select>
+                            data-url="@Url.Page("index", "search")&l=@Model.Line" autocomplete="off"></select>
                 </div>
             </form>
         </div>
     </div>
-
-
-    @if (Model.TurModel != null)
+    @if (Model.ShowHelp)
     {
     <div class="row">
         <div class="col">
+            <br/>
+            <h3>Hjelp</h3>
+            <p>Løysinga gjer deg oversikt over kapasiteten på bussar og Bybanen i området Hordaland. Datagrunnlaget viser tall frå i går og ein veke tilbake i tid. På den måten kan du sjekke når det er sannsynleg at det er mykje folk om bord, og tilpasse reisa di til når det er ledig kapasitet.</p>
 
-            <div class="table-responsive-sm">
-                <table class="table table-striped table-sm table-hover">
-                    <thead>
-                        <tr>
-                            <th scope="col" style="background: #eee; position: sticky; top: 0;">Linje</th>
-                            <th scope="col" style="background: #eee; position: sticky; top: 0;">Retning</th>
-                            <th scope="col" style="background: #eee; position: sticky; top: 0;">Avgang</th>
-                            <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.ToShortDateString()</th>
-                            <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-1).ToShortDateString()</th>
-                            <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-2).ToShortDateString()</th>
-                            <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-3).ToShortDateString()</th>
-                            <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-4).ToShortDateString()</th>
-                            <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-5).ToShortDateString()</th>
-                            <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-6).ToShortDateString()</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model.TurModel.Results)
-                    {
-                        var days = new List<TrafficLoadWeb.Models.Tur>();
-                        days.Add(item);
-                        days.AddRange(item.History.Cast<TrafficLoadWeb.Models.Tur>());
-
-                        <tr>
-                            <td>@Html.DisplayFor(modelItem => item.LineName)</td>
-                            <td>@Html.DisplayFor(modelItem => item.TilStopp)</td>
-                            <td>@Html.Raw(item.AvgangsTid.ToShortTimeString())</td>
-
-                            @for (int i = 0; i > -7; i--)
-                            {
-                                var itm = days.Where(h => h.AvgangsTid.Date == item.AvgangsTid.Date.AddDays(i)).FirstOrDefault();
-                                if (itm != null)
-                                {
-                            <td>
-                                @if (itm.IsRed(Model.Status))
-                                        {
-                                <a href="#" class="badge badge-pill badge-danger" style="width:35px" data-toggle="tooltip" data-placement="bottom" title="@itm.FraStopp(Model.Status)">+@Html.Raw(Convert.ToInt32(itm.Ombord) - itm.StatusKapasitet(Model.Status))</a>
-                                <span style="float:right;padding-top:3px;padding-left:5px;text-indent:-80px"><span style="display:block;font-size:65%;text-align:center;">@Html.Raw((itm.TilTid(Model.Status) - itm.FraTid(Model.Status)).Value.Minutes)</span><span style="display:block;font-size:45%;text-align:center;">min</span></span>
-                                        }
-                                @if (itm.IsYellow(Model.Status))
-                                        {
-                                <a href="#" class="badge badge-pill badge-warning" style="width:35px" data-toggle="tooltip" data-placement="bottom" title="@itm.FraStopp(Model.Status)">+@Html.Raw(Convert.ToInt32(itm.Ombord) - itm.StatusKapasitet(Model.Status))</a>
-                                        }
-                                @if (itm.IsGreen(Model.Status) && itm.StatusKapasitet(Model.Status) - Convert.ToInt32(itm.Ombord) <= 5)
-                                        {
-                                <a href="#" class="badge badge-pill badge-success" style="width:35px">&lt; 5</a>
-                                        }
-                                @if (itm.IsGreen(Model.Status) && itm.StatusKapasitet(Model.Status) - Convert.ToInt32(itm.Ombord) > 5)
-                                        {
-                                <a href="#" class="badge badge-pill badge-success" style="width:35px">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
-                                        }
-
-                                @if (itm.IsUnknown(Model.Status))
-                                        {
-                                <span class="badge badge-pill badge-light">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                                        }
-                            </td>
-                                }
-                                else
-                                {
-                            <td><span class="badge badge-pill badge-light">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
-                                }
-
-                            }
-                        </tr>
-                    }
-                    </tbody>
-                </table>
-            </div>
-            </div>
-    </div>
+            <p>
+                Du har desse valga:
+                <ul>
+                    <li>Vel tidsperiode du vil reise (på mobil må du trykke på området du vil flytte markøren til)</li>
+                    <li>Vel mellom alle avgangar eller vis berre dei som har avvik.</li>
+                    <li>Vel linjenummer eller haldeplass.</li>
+                    <li>Vel smittevernnivå for kollektivtrafikken. Per 21. august er det gult.</li>
+                </ul>
+            </p>
+            <p>Fargetyding i tabellen:</p>
+            <dl>
+                <dd>
+                    <span class="badge badge-pill badge-success">Grøn</span>
+                    Ikkje over gjeldande kapasitet
+                </dd>
+                <dd>
+                    <span class="badge badge-pill badge-warning">Gul</span>: Fleire om bord enn gjeldande kapasitet
+                </dd>
+                <dd>
+                    <span class="badge badge-pill badge-danger">Rød</span> 25% over gjeldande kapasitet, eller gult i lengre enn 15 minutt
+                </dd>
+                <dd><span class="badge badge-pill badge-light">Kvit</span> Data ikkje tilgjengeleg</dd>
+            </dl>
+            <p>
+                Tala i boksane indikerer kor mange fleire passasjerar enn anbefalt det er om bord.
+                Antall minutt viser kor lenge det har vore for mange passasjerar om bord
+            </p>
+            <p>
+                Har du tilbakemelding om løysninga, ver venleg å bruk <a href="https://www.skyss.no/kontakt-oss/kontaktskjema/">kontaktskjemaet her.</a>
+            </p></div></div>
             }
+
+            @if (!Model.ShowHelp && Model.TurModel != null)
+    {
+            <div class="row">
+                <div class="col">
+                    <table class="table table-striped table-sm table-hover table-responsive-sm">
+                        <thead>
+                            <tr>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">Linje</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">Retning</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">Avgang</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.ToShortDateString()</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-1).ToShortDateString()</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-2).ToShortDateString()</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-3).ToShortDateString()</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-4).ToShortDateString()</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-5).ToShortDateString()</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-6).ToShortDateString()</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.TurModel.Results)
+                        {
+                            var days = new List<TrafficLoadWeb.Models.Tur>();
+                            days.Add(item);
+                            days.AddRange(item.History.Cast<TrafficLoadWeb.Models.Tur>());
+
+                            <tr>
+                                <td>@Html.DisplayFor(modelItem => item.LineName)</td>
+                                <td>@Html.DisplayFor(modelItem => item.TilStopp)</td>
+                                <td>@Html.Raw(item.AvgangsTid.ToShortTimeString())</td>
+
+                                @for (int i = 0; i > -7; i--)
+                                {
+                                    var itm = days.Where(h => h.AvgangsTid.Date == item.AvgangsTid.Date.AddDays(i)).FirstOrDefault();
+                                    if (itm != null)
+                                    {
+                                <td>
+                                    @if (itm.IsRed(Model.Status))
+                                            {
+                                    <a href="#" class="badge badge-pill badge-danger" style="width:35px" data-toggle="tooltip" data-placement="bottom" title="@itm.FraStopp(Model.Status)">+@Html.Raw(Convert.ToInt32(itm.Ombord) - itm.StatusKapasitet(Model.Status))</a>
+                                    <span style="float:right;padding-top:3px;padding-left:5px;text-indent:-80px"><span style="display:block;font-size:65%;text-align:center;">@Html.Raw((itm.TilTid(Model.Status) - itm.FraTid(Model.Status)).Value.Minutes)</span><span style="display:block;font-size:45%;text-align:center;">min</span></span>
+                                            }
+                                    @if (itm.IsYellow(Model.Status))
+                                            {
+                                    <a href="#" class="badge badge-pill badge-warning" style="width:35px" data-toggle="tooltip" data-placement="bottom" title="@itm.FraStopp(Model.Status)">+@Html.Raw(Convert.ToInt32(itm.Ombord) - itm.StatusKapasitet(Model.Status))</a>
+                                            }
+                                    @if (itm.IsGreen(Model.Status) && itm.StatusKapasitet(Model.Status) - Convert.ToInt32(itm.Ombord) <= 5)
+                                            {
+                                    <a href="#" class="badge badge-pill badge-success" style="width:35px">&lt; 5</a>
+                                            }
+                                    @if (itm.IsGreen(Model.Status) && itm.StatusKapasitet(Model.Status) - Convert.ToInt32(itm.Ombord) > 5)
+                                            {
+                                    <a href="#" class="badge badge-pill badge-success" style="width:35px">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+                                            }
+
+                                    @if (itm.IsUnknown(Model.Status))
+                                            {
+                                    <span class="badge badge-pill badge-light">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                                            }
+                                </td>
+                                    }
+                                    else
+                                    {
+                                <td><span class="badge badge-pill badge-light">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
+                                    }
+
+                                }
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @if (Model.TurModel.PageCount > 1)
+        {
+            var firstPage = 1;
+            var lastPage = Model.TurModel.PageCount > 18? 18 : Model.TurModel.PageCount;
+
+            // too many pages?
+            if (Model.TurModel.PageCount > 18) {
+                if (Model.TurModel.CurrentPage > 9 && Model.TurModel.CurrentPage < (Model.TurModel.PageCount - 9)) {
+                    firstPage = Model.TurModel.CurrentPage - 9;
+                    lastPage = Model.TurModel.CurrentPage + 9;
+                } else if (Model.TurModel.CurrentPage > 9) {
+                    firstPage = Model.TurModel.PageCount - 18;
+                    lastPage = Model.TurModel.PageCount;
+                }
+            }
+
+            <div class="row">
+                <div class="col align-content-center">
+                    <nav aria-label="Navigering kapasitetstabell">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item @(Model.TurModel.CurrentPage.Equals(1) ? "disabled" : "")">
+                                <a class="page-link" aria-label="Forrige" asp-all-route-data="@(parms.Where(p => !p.Key.ToLower().Equals("displaypage")).ToDictionary(p => p.Key, p => p.Value))" asp-route-displaypage="@(Model.TurModel.CurrentPage - 1)" asp-route-showHelp="false">
+                                    <span aria-hidden="true">&laquo;</span>
+                                    <span class="sr-only">Forrige</span>
+                                </a>
+                            </li>
+                            @if (firstPage > 1)
+                        {
+                            <li class="page-item"><a class="page-link" asp-all-route-data="@(parms.Where(p => !p.Key.ToLower().Equals("displaypage")).ToDictionary(p => p.Key, p => p.Value))" asp-route-displaypage="1" asp-route-showHelp="false">1</a></li>
+                            @if (firstPage > 2)
+                            {
+                            <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                            }
+                        }
+                            @for (var p = firstPage; p <= lastPage; p++)
+                        {
+                            <li class="page-item @(p.Equals(Model.TurModel.CurrentPage) ? "active" : "")"><a class="page-link" asp-all-route-data="@(parms.Where(p => !p.Key.ToLower().Equals("displaypage")).ToDictionary(p => p.Key, p => p.Value))" asp-route-displaypage="@p" asp-route-showHelp="false">@p</a></li>
+                        }
+                            @if (lastPage < Model.TurModel.PageCount)
+                        {
+                            @if (Model.TurModel.PageCount - lastPage > 1)
+                            {
+                            <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                            }
+                            <li class="page-item"><a class="page-link" asp-all-route-data="@(parms.Where(p => !p.Key.ToLower().Equals("displaypage")).ToDictionary(p => p.Key, p => p.Value))" asp-route-displaypage="@Model.TurModel.PageCount" asp-route-showHelp="false">@Model.TurModel.PageCount</a></li>
+                        }
+                            <li class="page-item @Model.TurModel.LastRowOnPage.Equals(Model.TurModel.CurrentPage)?" disabled":"">
+                                <a class="page-link" aria-label="Neste" asp-all-route-data="@(parms.Where(p => !p.Key.ToLower().Equals("displaypage")).ToDictionary(p => p.Key, p => p.Value))" asp-route-displaypage="@(Model.TurModel.CurrentPage + 1)" asp-route-showHelp="false">
+                                    <span aria-hidden="true">&raquo;</span>
+                                    <span class="sr-only">Neste</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+            }
+        }
             }

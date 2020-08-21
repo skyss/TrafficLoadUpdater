@@ -8,7 +8,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
+    <title>Skyss/Kringom kapasitetsindikator</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" />
     <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
@@ -133,72 +133,100 @@
     </style>
 </head>
 <body>
+    <!-- Google Tag Manager -->
+    <noscript>
+        <iframe src="//www.googletagmanager.com/ns.html?id=GTM-TB297Q" height="0" width="0" style="display: none; visibility: hidden"></iframe>
+    </noscript>
+    <script type="text/javascript">
+        (function (w, d, s, l, i) {
+            w[l] = w[l] || [];
+            w[l].push({
+                'gtm.start':
+                    new Date().getTime(),
+                event: 'gtm.js'
+            });
+            var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s),
+                dl = l != 'dataLayer' ? '&l=' + l : '';
+            j.async = true;
+            j.src =
+                '//www.googletagmanager.com/gtm.js?id=' + i + dl;
+            f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-TB297Q');
+    </script>
+    <!-- End Google Tag Manager -->
+
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2020 - Skyss/Kringom
+    <div class="container">
+
+        <div class="row">
+            <div class="col text-muted">
+                &copy; 2020 - Skyss/Kringom nyttar utstyr om bord som teller passasjerane. Desse tala er ikkje nødvendigvis helt nøyaktige for kvar avgang, og vi har ikkje utstyr på alle køyretøy. Det kan difor finnast feil i datagrunnlaget.
+            </div>
         </div>
-    </footer>
+    </div>
+        <script src="~/lib/jquery/dist/jquery.min.js"></script>
+        <script src="~/lib/jquery-ui/jquery-ui.min.js"></script>
+        <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="//cdn.jsdelivr.net/gh/xcash/bootstrap-autocomplete@v2.3.5/dist/latest/bootstrap-autocomplete.min.js"></script>
+        <script src="~/js/site.js" asp-append-version="true"></script>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/jquery-ui/jquery-ui.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="//cdn.jsdelivr.net/gh/xcash/bootstrap-autocomplete@v2.3.5/dist/latest/bootstrap-autocomplete.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+        @RenderSection("Scripts", required: false)
 
-    @RenderSection("Scripts", required: false)
+        <script>
 
-    <script>
+            $('.basicAutoComplete').autoComplete({ minLength: 1 });
 
-        $('.basicAutoComplete').autoComplete();
-
-        $('.basicAutoComplete').on('autocomplete.select', function (evt, item) {
-            $('#stopSelect').submit();
-        });
-
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
-        })
-
-        $('#activeDate').change(function () {
-            $('#filters').submit();
-        });
-
-        $("#slider-range").slider({
-            range: true,
-            min: 0,
-            max: 1440,
-            step: 15,
-            values: $("#slider-range").data("values"),
-            slide: function(e, ui) {
-                var hours1 = Math.floor(ui.values[0] / 60);
-                var minutes1 = ui.values[0] - (hours1 * 60);
-
-                if (hours1 < 10) hours1 = '0' + hours1;
-                if (minutes1 < 10) minutes1 = '0' + minutes1;
-                if (minutes1 == 0) minutes1 = '00';
-
-                $('.slider-time').html(hours1 + ':' + minutes1);
-
-                var hours2 = Math.floor(ui.values[1] / 60);
-                var minutes2 = ui.values[1] - (hours2 * 60);
-
-                if (hours2 < 10) hours2 = '0' + hours2;
-                if (minutes2 < 10) minutes2 = '0' + minutes2;
-                if (minutes2 == 0) minutes2 = '00';
-
-                $('.slider-time2').html(hours2 + ':' + minutes2);
-            },
-            stop: function (event, ui) {
-                $('#timespan').val('[' + ui.values[0] + ',' + ui.values[1] + ']');
+            $('.basicAutoComplete').on('autocomplete.select', function (evt, item) {
                 $('#stopSelect').submit();
-            }
-        });
-    </script>
+            });
+            $('.basicAutoComplete').on('change', function (evt, item) {
+                $('#stopSelect').submit();
+            });
+
+            $(function () {
+                $('[data-toggle="tooltip"]').tooltip()
+            })
+
+            $('#activeDate').change(function () {
+                $('#filters').submit();
+            });
+
+            $("#slider-range").slider({
+                range: true,
+                min: 0,
+                max: 1440,
+                step: 15,
+                values: $("#slider-range").data("values"),
+                slide: function (e, ui) {
+                    var hours1 = Math.floor(ui.values[0] / 60);
+                    var minutes1 = ui.values[0] - (hours1 * 60);
+
+                    if (hours1 < 10) hours1 = '0' + hours1;
+                    if (minutes1 < 10) minutes1 = '0' + minutes1;
+                    if (minutes1 == 0) minutes1 = '00';
+
+                    $('.slider-time').html(hours1 + ':' + minutes1);
+
+                    var hours2 = Math.floor(ui.values[1] / 60);
+                    var minutes2 = ui.values[1] - (hours2 * 60);
+
+                    if (hours2 < 10) hours2 = '0' + hours2;
+                    if (minutes2 < 10) minutes2 = '0' + minutes2;
+                    if (minutes2 == 0) minutes2 = '00';
+
+                    $('.slider-time2').html(hours2 + ':' + minutes2);
+                },
+                stop: function (event, ui) {
+                    $('#timespan').val('[' + ui.values[0] + ',' + ui.values[1] + ']');
+                    $('#stopSelect').submit();
+                }
+            });
+        </script>
 </body>
 </html>
