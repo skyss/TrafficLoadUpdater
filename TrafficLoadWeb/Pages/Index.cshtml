@@ -68,10 +68,10 @@
             </ul>
             <ul class="nav nav-tabs mr-auto flex-grow-1">
                 <li class="nav-item">
-                    <a class="nav-link @(!Model.ShowHelp && Model.FilterStatus.ToString() == "Green"?"active":"")" asp-all-route-data="@(parms.Where(p => !p.Key.ToLower().Equals("filterstatus")).ToDictionary(p => p.Key, p=> p.Value))" asp-route-filterstatus="Green" asp-page="Index">Alle avgangar</a>
+                    <a class="nav-link @(!Model.ShowHelp && Model.FilterStatus.ToString() == "Green"?"active":"")" asp-all-route-data="@(parms.Where(p => !p.Key.ToLower().Equals("filterstatus") && !p.Key.ToLower().Equals("displaypage")).ToDictionary(p => p.Key, p=> p.Value))" asp-route-filterstatus="Green" asp-route-displaypage="1" asp-page="Index">Alle avgangar</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @(!Model.ShowHelp && Model.FilterStatus.ToString() == "Yellow"?"active":"")" asp-all-route-data="@(parms.Where(p => !p.Key.ToLower().Equals("filterstatus")).ToDictionary(p => p.Key, p=> p.Value))" asp-route-filterstatus="Yellow" asp-page="Index">Avgangar med avvik</a>
+                    <a class="nav-link @(!Model.ShowHelp && Model.FilterStatus.ToString() == "Yellow"?"active":"")" asp-all-route-data="@(parms.Where(p => !p.Key.ToLower().Equals("filterstatus") && !p.Key.ToLower().Equals("displaypage")).ToDictionary(p => p.Key, p=> p.Value))" asp-route-filterstatus="Yellow" asp-route-displaypage="1" asp-page="Index">Avgangar med avvik</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link @(Model.ShowHelp?"active":"")" asp-all-route-data="@parms" asp-page="Index" asp-route-showHelp="true">Hjelp</a>
@@ -166,13 +166,13 @@
                                 <th scope="col" style="background: #eee; position: sticky; top: 0;">Linje</th>
                                 <th scope="col" style="background: #eee; position: sticky; top: 0;">Retning</th>
                                 <th scope="col" style="background: #eee; position: sticky; top: 0;">Avgang</th>
-                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.ToShortDateString()</th>
-                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-1).ToShortDateString()</th>
-                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-2).ToShortDateString()</th>
-                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-3).ToShortDateString()</th>
-                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-4).ToShortDateString()</th>
-                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-5).ToShortDateString()</th>
-                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-6).ToShortDateString()</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">Førre veke</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.ToShortDateString().Substring(0, 5)</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-1).ToShortDateString().Substring(0, 5)</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-2).ToShortDateString().Substring(0, 5)</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-3).ToShortDateString().Substring(0, 5)</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-4).ToShortDateString().Substring(0, 5)</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-5).ToShortDateString().Substring(0, 5)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -181,45 +181,46 @@
                             var days = new List<TrafficLoadWeb.Models.Tur>();
                             days.Add(item);
                             days.AddRange(item.History.Cast<TrafficLoadWeb.Models.Tur>());
+                            var seq = new int[] {0, 6, 5, 4, 3, 2, 1};
 
                             <tr>
                                 <td>@Html.DisplayFor(modelItem => item.LineName)</td>
                                 <td>@Html.DisplayFor(modelItem => item.TilStopp)</td>
                                 <td>@Html.Raw(item.AvgangsTid.ToShortTimeString())</td>
 
-                                @for (int i = 0; i > -7; i--)
+                                @foreach (int i in seq)
                                 {
                                     var itm = days.Where(h => h.AvgangsTid.Date == item.AvgangsTid.Date.AddDays(i)).FirstOrDefault();
+
                                     if (itm != null)
                                     {
-                                <td>
-                                    @if (itm.IsRed(Model.Status))
+                            <td>
+                                @if (itm.IsRed(Model.Status))
                                             {
-                                    <a href="#" class="badge badge-pill badge-danger" style="width:35px" data-toggle="tooltip" data-placement="bottom" title="@itm.FraStopp(Model.Status)">+@Html.Raw(Convert.ToInt32(itm.Ombord) - itm.StatusKapasitet(Model.Status))</a>
-                                    <span style="float:right;padding-top:3px;padding-left:5px;text-indent:-80px"><span style="display:block;font-size:65%;text-align:center;">@Html.Raw((itm.TilTid(Model.Status) - itm.FraTid(Model.Status)).Value.Minutes)</span><span style="display:block;font-size:45%;text-align:center;">min</span></span>
+                                <a href="#" class="badge badge-pill badge-danger" style="width:45px" data-toggle="tooltip" data-placement="bottom" title="@itm.FraStopp(Model.Status)">+@Html.Raw(Convert.ToInt32(itm.Ombord) - itm.StatusKapasitet(Model.Status))</a>
                                             }
-                                    @if (itm.IsYellow(Model.Status))
+                                @if (itm.IsYellow(Model.Status))
                                             {
-                                    <a href="#" class="badge badge-pill badge-warning" style="width:35px" data-toggle="tooltip" data-placement="bottom" title="@itm.FraStopp(Model.Status)">+@Html.Raw(Convert.ToInt32(itm.Ombord) - itm.StatusKapasitet(Model.Status))</a>
+                                <a href="#" class="badge badge-pill badge-warning" style="width:45px" data-toggle="tooltip" data-placement="bottom" title="@itm.FraStopp(Model.Status)">+@Html.Raw(Convert.ToInt32(itm.Ombord) - itm.StatusKapasitet(Model.Status))</a>
                                             }
-                                    @if (itm.IsGreen(Model.Status) && itm.StatusKapasitet(Model.Status) - Convert.ToInt32(itm.Ombord) <= 5)
-                                            {
-                                    <a href="#" class="badge badge-pill badge-success" style="width:35px">&lt; 5</a>
+                                @if (itm.IsGreen(Model.Status) && (itm.StatusKapasitet(Model.Status) - Convert.ToInt32(itm.Ombord)) >= itm.StatusKapasitet(Model.Status) * 0.8)
+                                {
+                                <a href="#" class="badge badge-pill badge-warning" style="width: 45px">&lt;20%</a>
                                             }
-                                    @if (itm.IsGreen(Model.Status) && itm.StatusKapasitet(Model.Status) - Convert.ToInt32(itm.Ombord) > 5)
+                                @if (itm.IsGreen(Model.Status) && (itm.StatusKapasitet(Model.Status) - Convert.ToInt32(itm.Ombord)) < itm.StatusKapasitet(Model.Status) * 0.8)
                                             {
-                                    <a href="#" class="badge badge-pill badge-success" style="width:35px">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+                                <a href="#" class="badge badge-pill badge-success" style="width:45px">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
                                             }
 
-                                    @if (itm.IsUnknown(Model.Status))
+                                @if (itm.IsUnknown(Model.Status))
                                             {
-                                    <span class="badge badge-pill badge-light">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                                <span class="badge badge-pill badge-light" style="width:45px">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                                             }
-                                </td>
+                            </td>
                                     }
                                     else
                                     {
-                                <td><span class="badge badge-pill badge-light">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
+                                <td><span class="badge badge-pill badge-light" style="width:45px">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
                                     }
 
                                 }

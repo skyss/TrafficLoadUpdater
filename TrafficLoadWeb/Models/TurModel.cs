@@ -49,6 +49,11 @@ namespace TrafficLoadWeb.Models
             return (int) Math.Floor(((double)this.Kapasitet * ((int)CurrentStatus) / 100.0));
         }
 
+        public int FillLevel(TrafficLightStatus CurrentStatus = TrafficLightStatus.Red)
+        {
+            return (StatusKapasitet(CurrentStatus) - StatusKapasitet(CurrentStatus) % 20) / 5;
+        }
+
         public bool IsRed(TrafficLightStatus CurrentStatus = TrafficLightStatus.Red)
         {
             if (!this.FraTid(CurrentStatus).HasValue || !this.TilTid(CurrentStatus).HasValue || this.IsUnknown(CurrentStatus))
@@ -129,7 +134,7 @@ namespace TrafficLoadWeb.Models
 
     }
 
-    [Table("OverlastTurerHistorie")]
+    [Table("OverlastTurerHistorie2")]
     public class TurModelHistory : Tur
     {
         public String MasterTripKey { get; set; }

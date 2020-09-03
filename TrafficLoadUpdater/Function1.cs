@@ -14,7 +14,7 @@ namespace TrafficLoadUpdater
     public static class UpdateTeams
     {
         [FunctionName("SendTrafficLoadUpdate")]
-        public static async void Run([TimerTrigger("0 15 8 * * *", RunOnStartup = true)]TimerInfo myTimer, ILogger log)
+        public static async void Run([TimerTrigger("0 15 8 * * *")]TimerInfo myTimer, ILogger log)
         {
             var config = new ConfigurationBuilder()
                 .SetBasePath(Environment.CurrentDirectory)
@@ -175,6 +175,19 @@ namespace TrafficLoadUpdater
                 conn.Close();
             }
 
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+
+                sql = $"insert into Stoppoint_data_short select * from STOPPOINT_DATA where Operating_dateKey = '{DateTime.Now.AddDays(-1).ToString("yyyyMMdd")}'";
+
+                using SqlCommand cmd = new SqlCommand(sql, conn);
+                cmd.CommandTimeout = 300;
+                cmd.ExecuteNonQuery();
+
+                conn.Close();
+            }
+
             sql = @"select
 	                    case when LineName = '1' then 'Bybanen' else 'Buss' end as Line,
 	                    sum(case 
@@ -226,7 +239,7 @@ namespace TrafficLoadUpdater
                 conn.Close();
             }
 
-            String url = "https://trafficload.azurewebsites.net/Yellow/Yellow/" + DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd");
+            String url = "https://kapasitet.skyss.no/Yellow/" + DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd");
 
             String json = @"
                 {

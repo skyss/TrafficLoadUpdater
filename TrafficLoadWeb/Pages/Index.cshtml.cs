@@ -40,7 +40,7 @@ namespace TrafficLoadWeb.Pages
         public DateTime TimeSpanFrom { 
             get {
                 var hours = TimeSpan.Replace("[", "").Replace("]", "").Split(",");
-                return Date.Date.AddMinutes(double.Parse(hours[0]));
+                return DateTime.Now.AddDays(-7).Date.AddMinutes(double.Parse(hours[0]));
             }
         }
 
@@ -48,7 +48,7 @@ namespace TrafficLoadWeb.Pages
             get
             {
                 var hours = TimeSpan.Replace("[", "").Replace("]", "").Split(",");
-                return Date.Date.AddMinutes(double.Parse(hours[1]));
+                return DateTime.Now.AddDays(-7).Date.AddMinutes(double.Parse(hours[1]));
             }
         }
 
@@ -59,7 +59,7 @@ namespace TrafficLoadWeb.Pages
         public TrafficLightStatus FilterStatus { get; set; } = TrafficLightStatus.Green;
 
         [BindProperty(SupportsGet = true)]
-        public DateTime Date { get; set; } = DateTime.Now.AddDays(-1);
+        public DateTime Date { get; set; } = ((long)DateTime.Now.TimeOfDay.TotalMinutes) >= 377 ? DateTime.Now.AddDays(-1) : DateTime.Now.AddDays(-2);
 
         [BindProperty(SupportsGet = true)]
         public String Line { get; set; }
