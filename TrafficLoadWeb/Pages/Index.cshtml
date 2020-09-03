@@ -197,15 +197,15 @@
                             <td>
                                 @if (itm.IsRed(Model.Status))
                                 {
-                                    <a href="#" class="badge badge-pill badge-danger" style="width:45px" data-toggle="tooltip" data-placement="bottom" title="@itm.FraStopp(Model.Status)">+@Html.Raw(Convert.ToInt32(itm.Ombord) - itm.StatusKapasitet(Model.Status))</a>
+                                    <a href="#" class="badge badge-pill badge-danger" style="width:45px" data-toggle="tooltip" data-placement="bottom" title="@itm.FraStopp(Model.Status)"></a>
                                 }
                                 @if (itm.IsYellow(Model.Status))
                                 {
-                                    <a href="#" class="badge badge-pill badge-warning" style="width:45px" data-toggle="tooltip" data-placement="bottom" title="@itm.FraStopp(Model.Status)">+@Html.Raw(Convert.ToInt32(itm.Ombord) - itm.StatusKapasitet(Model.Status))</a>
+                                    <a href="#" class="badge badge-pill badge-danger" style="width:45px" data-toggle="tooltip" data-placement="bottom" title="@itm.FraStopp(Model.Status)"></a>
                                 }
                                 @if (itm.IsGreen(Model.Status) && Convert.ToInt32(itm.Ombord) >= itm.StatusKapasitet(Model.Status) * 0.8)
                                 {
-                                    <a href="#" class="badge badge-pill badge-warning" style="width: 45px">&lt;20%</a>
+                                    <a href="#" class="badge badge-pill badge-warning" style="width: 45px"></a>
                                 }
                                 @if (itm.IsGreen(Model.Status) && Convert.ToInt32(itm.Ombord) < itm.StatusKapasitet(Model.Status) * 0.8)
                                 {
