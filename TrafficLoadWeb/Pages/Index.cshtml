@@ -166,13 +166,13 @@
                                 <th scope="col" style="background: #eee; position: sticky; top: 0;">Linje</th>
                                 <th scope="col" style="background: #eee; position: sticky; top: 0;">Retning</th>
                                 <th scope="col" style="background: #eee; position: sticky; top: 0;">Avgang</th>
-                                <th scope="col" style="background: #eee; position: sticky; top: 0;">Førre veke</th>
-                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.ToShortDateString().Substring(0, 5)</th>
-                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-1).ToShortDateString().Substring(0, 5)</th>
-                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-2).ToShortDateString().Substring(0, 5)</th>
-                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-3).ToShortDateString().Substring(0, 5)</th>
-                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-4).ToShortDateString().Substring(0, 5)</th>
-                                <th scope="col" style="background: #eee; position: sticky; top: 0;">@Model.Date.AddDays(-5).ToShortDateString().Substring(0, 5)</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;"><span style="font-size:65%;float:left;">Førre<br/>veke</span></th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;" class="small">@Model.Date.ToShortDateString().Substring(0, 5)</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;" class="small">@Model.Date.AddDays(-1).ToShortDateString().Substring(0, 5)</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;" class="small">@Model.Date.AddDays(-2).ToShortDateString().Substring(0, 5)</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;" class="small">@Model.Date.AddDays(-3).ToShortDateString().Substring(0, 5)</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;" class="small">@Model.Date.AddDays(-4).ToShortDateString().Substring(0, 5)</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;" class="small">@Model.Date.AddDays(-5).ToShortDateString().Substring(0, 5)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -184,9 +184,9 @@
                             var seq = new int[] {0, 6, 5, 4, 3, 2, 1};
 
                             <tr>
-                                <td>@Html.DisplayFor(modelItem => item.LineName)</td>
-                                <td>@Html.DisplayFor(modelItem => item.TilStopp)</td>
-                                <td>@Html.Raw(item.AvgangsTid.ToShortTimeString())</td>
+                                <td class="small">@Html.DisplayFor(modelItem => item.LineName)</td>
+                                <td class="small">@Html.DisplayFor(modelItem => item.TilStopp)</td>
+                                <td class="small">@Html.Raw(item.AvgangsTid.ToShortTimeString())</td>
 
                                 @foreach (int i in seq)
                                 {
@@ -197,30 +197,30 @@
                             <td>
                                 @if (itm.IsRed(Model.Status))
                                 {
-                                    <a href="#" class="badge badge-pill badge-danger" style="width:45px" data-toggle="tooltip" data-placement="bottom" title="@itm.FraStopp(Model.Status)"></a>
+                                <a href="#" class="badge badge-pill badge-danger" style="width:25px" data-toggle="tooltip" data-placement="bottom" title="@itm.FraStopp(Model.Status)">&nbsp;</a>
                                 }
                                 @if (itm.IsYellow(Model.Status))
                                 {
-                                    <a href="#" class="badge badge-pill badge-danger" style="width:45px" data-toggle="tooltip" data-placement="bottom" title="@itm.FraStopp(Model.Status)"></a>
+                            <a href="#" class="badge badge-pill badge-danger" style="width:25px" data-toggle="tooltip" data-placement="bottom" title="@itm.FraStopp(Model.Status)">&nbsp;</a>
                                 }
                                 @if (itm.IsGreen(Model.Status) && Convert.ToInt32(itm.Ombord) >= itm.StatusKapasitet(Model.Status) * 0.8)
                                 {
-                                    <a href="#" class="badge badge-pill badge-warning" style="width: 45px"></a>
+                            <a href="#" class="badge badge-pill badge-warning" style="width:25px">&nbsp;</a>
                                 }
                                 @if (itm.IsGreen(Model.Status) && Convert.ToInt32(itm.Ombord) < itm.StatusKapasitet(Model.Status) * 0.8)
                                 {
-                                    <a href="#" class="badge badge-pill badge-success" style="width:45px">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+                                    <a href="#" class="badge badge-pill badge-success" style="width:25px">&nbsp;</a>
                                 }
 
                                 @if (itm.IsUnknown(Model.Status))
                                 {
-                                    <span class="badge badge-pill badge-light" style="width:45px">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                                    <span class="badge badge-pill badge-light" style="width:25px">&nbsp;</span>
                                 }
                             </td>
                                     }
                                     else
                                     {
-                                <td><span class="badge badge-pill badge-light" style="width:45px">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
+                                <td><span class="badge badge-pill badge-light" style="width:25px">&nbsp;</span></td>
                                     }
 
                                 }
@@ -233,15 +233,15 @@
             @if (Model.TurModel.PageCount > 1)
         {
             var firstPage = 1;
-            var lastPage = Model.TurModel.PageCount > 18? 18 : Model.TurModel.PageCount;
+            var lastPage = Model.TurModel.PageCount > 10? 10 : Model.TurModel.PageCount;
 
             // too many pages?
-            if (Model.TurModel.PageCount > 18) {
-                if (Model.TurModel.CurrentPage > 9 && Model.TurModel.CurrentPage < (Model.TurModel.PageCount - 9)) {
-                    firstPage = Model.TurModel.CurrentPage - 9;
-                    lastPage = Model.TurModel.CurrentPage + 9;
-                } else if (Model.TurModel.CurrentPage > 9) {
-                    firstPage = Model.TurModel.PageCount - 18;
+            if (Model.TurModel.PageCount > 10) {
+                if (Model.TurModel.CurrentPage > 4 && Model.TurModel.CurrentPage < (Model.TurModel.PageCount - 4)) {
+                    firstPage = Model.TurModel.CurrentPage - 4;
+                    lastPage = Model.TurModel.CurrentPage + 4;
+                } else if (Model.TurModel.CurrentPage > 4) {
+                    firstPage = Model.TurModel.PageCount - 10;
                     lastPage = Model.TurModel.PageCount;
                 }
             }
