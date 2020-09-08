@@ -17,6 +17,7 @@ namespace TrafficLoadWeb.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<TurModel>().HasMany(c => c.History);
+            modelBuilder.Entity<TurModel>().HasMany(c => c.Report);
         }
 
     }

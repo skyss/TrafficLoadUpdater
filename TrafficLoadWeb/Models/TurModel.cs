@@ -126,6 +126,9 @@ namespace TrafficLoadWeb.Models
         [NotMapped, ForeignKey("MasterTripKey")]
         public virtual ICollection<TurModelHistory> History { get; set; }
 
+        [NotMapped, ForeignKey("MasterTripKey")]
+        public virtual ICollection<TurModelHistoryReport> Report { get; set; }
+
     }
 
     [Table("OverlastTurer")]
@@ -140,4 +143,12 @@ namespace TrafficLoadWeb.Models
         public String MasterTripKey { get; set; }
         public DateTime MasterTid { get; set; }
     }
+
+    [Table("OverlastTurerHistorie")]
+    public class TurModelHistoryReport : Tur
+    {
+        public String MasterTripKey { get; set; }
+        public DateTime MasterTid { get; set; }
+    }
+
 }

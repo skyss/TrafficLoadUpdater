@@ -1,0 +1,136 @@
+﻿@page "/Report/{filterstatus:TrafficLight=Green}/{date:DateTime?}"
+@model ReportModel
+
+@{
+    var culture = new System.Globalization.CultureInfo("nb-NO");
+    ViewData["Title"] = "Home page";
+
+    var diff = (int)culture.DateTimeFormat.FirstDayOfWeek - (int)Model.Date.DayOfWeek;
+    if ((int)Model.Date.DayOfWeek == 0)
+        diff = -6;
+
+    DateTime startOfWeek = Model.Date.AddDays(diff);
+
+    List<DateTime> CurrentWeek = Enumerable
+        .Range(0, 7)
+        .Select(i => startOfWeek
+           .AddDays(i)
+        ).ToList<DateTime>();
+
+    var parms = new Dictionary<string, string>
+{
+                { "Status", Model.Status.ToString() },
+                { "Date", Model.Date.ToString("yyyy-MM-dd") }
+            };
+
+    var status = Model.Status.ToString().ToLower();
+
+    var statuses = new Tuple<string, string, Dictionary<string, string>>[]
+        {
+            Tuple.Create("text-danger", (status.Equals("red")?"Gjeldande " : "Endre til ") + ": Raud", new Dictionary<string, string>(parms)),
+            Tuple.Create("text-warning", (status.Equals("yellow")?"Gjeldande " : "Endre til ") + ": Gul", new Dictionary<string, string>(parms)),
+            Tuple.Create("text-success", (status.Equals("green")?"Gjeldande " : "Endre til ") + ": Grøn", new Dictionary<string, string>(parms))
+                        };
+
+    statuses[0].Item3["Status"] = "Red";
+    statuses[1].Item3["Status"] = "Yellow";
+    statuses[2].Item3["Status"] = "Green";
+
+    var currentStatus = statuses[(status.Equals("red") ? 0 : status.Equals("yellow") ? 1 : 2)];
+
+
+    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white mb-3">
+        <a class="navbar-brand skyss-logo" style="text-indent:-1500px" asp-area="" asp-page="/Index">Skyss COVID-19</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse navbar-expand-lg d-sm-inline-flex flex-sm-row-reverse">
+            <ul class="navbar-nav mr-auto flex-grow-1 justify-content-end">
+                <li class="nav-item">
+                    <div class="btn-group my-2 my-lg-0">
+                        <a class="dropdown-toggle @currentStatus.Item1" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">@currentStatus.Item2.Replace("Gjeldande", "Nasjonal status")</a>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            @foreach (var itm in statuses)
+                            {
+                            <a class="dropdown-item @itm.Item1" asp-all-route-data="@itm.Item3" asp-page="@ViewContext.RouteData.Values["page"]">@itm.Item2</a>
+                            }
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+            @if (Model.TurModel != null)
+    {
+            <div class="row">
+                <div class="col">
+                    <table class="table table-striped table-sm table-hover table-responsive-sm">
+                        <thead>
+                            <tr>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">Linje</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">Retning</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;">Avgang</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;" class="small">@Model.Date.ToShortDateString().Substring(0, 5)</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;" class="small">@Model.Date.AddDays(-1).ToShortDateString().Substring(0, 5)</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;" class="small">@Model.Date.AddDays(-2).ToShortDateString().Substring(0, 5)</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;" class="small">@Model.Date.AddDays(-3).ToShortDateString().Substring(0, 5)</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;" class="small">@Model.Date.AddDays(-4).ToShortDateString().Substring(0, 5)</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;" class="small">@Model.Date.AddDays(-5).ToShortDateString().Substring(0, 5)</th>
+                                <th scope="col" style="background: #eee; position: sticky; top: 0;" class="small">@Model.Date.AddDays(-6).ToShortDateString().Substring(0, 5)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.TurModel)
+                        {
+                            var days = new List<TrafficLoadWeb.Models.Tur>();
+                            days.Add(item);
+                            days.AddRange(item.Report.Cast<TrafficLoadWeb.Models.Tur>());
+                            var seq = new int[] {0, -1, -2, -3, -4, -5, -6};
+
+                            <tr>
+                                <td class="small">@Html.DisplayFor(modelItem => item.LineName)</td>
+                                <td class="small">@Html.DisplayFor(modelItem => item.TilStopp)</td>
+                                <td class="small">@Html.Raw(item.AvgangsTid.ToShortTimeString())</td>
+
+                                @foreach (int i in seq)
+                                {
+                                    var itm = days.Where(h => h.AvgangsTid.Date == item.AvgangsTid.Date.AddDays(i)).FirstOrDefault();
+
+                                    if (itm != null)
+                                    {
+                            <td>
+                                @if (itm.IsRed(Model.Status))
+                                {
+                                <a href="#" class="badge badge-pill badge-danger" style="width:40px" data-toggle="tooltip" data-placement="bottom" title="@itm.FraStopp(Model.Status)">@Math.Truncate(itm.Ombord)</a>
+                                }
+                                @if (itm.IsYellow(Model.Status))
+                                {
+                            <a href="#" class="badge badge-pill badge-warning" style="width:40px" data-toggle="tooltip" data-placement="bottom" title="@itm.FraStopp(Model.Status)">@Math.Truncate(@itm.Ombord)</a>
+                                }
+                                @if (itm.IsGreen(Model.Status))
+                                {
+                            <a href="#" class="badge badge-pill badge-success" style="width:40px">@Math.Truncate(itm.Ombord)</a>
+                                }
+
+                                @if (itm.IsUnknown(Model.Status))
+                                {
+                                    <span class="badge badge-pill badge-light" style="width:40px">&nbsp;</span>
+                                }
+                            </td>
+                                    }
+                                    else
+                                    {
+                                <td><span class="badge badge-pill badge-light" style="width:25px">&nbsp;</span></td>
+                                    }
+
+                                }
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+            }
