@@ -239,7 +239,7 @@ namespace TrafficLoadUpdater
                 conn.Close();
             }
 
-            String url = "https://kapasitet.skyss.no/Yellow/" + DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd");
+            String url = "https://kapasitet.skyss.no/Report/" + DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd");
 
             String json = @"
                 {
